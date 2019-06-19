@@ -720,7 +720,7 @@ class FtpClient implements Countable
         if (strpos($directory," ") > 0) {
             $ftproot = $this->ftp->pwd();
             $this->ftp->chdir($directory);
-            $list  = $this->ftp->rawlist("");
+            $list  = $this->ftp->rawlist("-l --time-style=full-iso");
             $this->ftp->chdir($ftproot);
         } else {
             $list  = $this->ftp->rawlist($directory);
@@ -861,10 +861,6 @@ class FtpClient implements Countable
                 'type'        => $this->rawToType($chunks[0]),
             ];
 
-            if ($item['type'] == 'link') {
-                $item['target'] = $chunks[10]; // 9 is "->"
-            }
-
             // if the key is not the path, behavior of ftp_rawlist() PHP function
             if (is_int($key) || false === strpos($key, $item['name'])) {
                 array_splice($chunks, 0, 8);
@@ -885,6 +881,15 @@ class FtpClient implements Countable
             } else {
 
                 // the key is the path, behavior of FtpClient::rawlist() method()
+
+                if ($item['type'] == 'link') {
+                    $exp = explode(' -> ', $item['name']);
+                    if (count($exp)==2) {
+                        $item['name'] = $exp[0];
+                        $item['target'] = $exp[1];
+                    }
+                }
+
                 $items[$key] = $item;
             }
         }
